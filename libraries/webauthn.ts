@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 import {
   GenerateAuthenticationOptionsOpts,
@@ -9,20 +9,14 @@ import {
   generateRegistrationOptions,
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
-} from "@simplewebauthn/server";
-import {
-  UserDevice,
-  createUser,
-  findUser,
-  getCurrentSession,
-  updateCurrentSession,
-} from "./user";
-import { origin, rpId } from "./constants";
+} from '@simplewebauthn/server';
+import { UserDevice, createUser, findUser, getCurrentSession, updateCurrentSession } from './user';
+import { origin, rpId } from './constants';
 import {
   AuthenticationResponseJSON,
   RegistrationResponseJSON,
-} from "@simplewebauthn/typescript-types";
-import { isoBase64URL } from "@simplewebauthn/server/helpers";
+} from '@simplewebauthn/typescript-types';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 
 export const generateWebAuthnRegistrationOptions = async (email: string) => {
   const user = await findUser(email);
@@ -30,20 +24,20 @@ export const generateWebAuthnRegistrationOptions = async (email: string) => {
   if (user) {
     return {
       success: false,
-      message: "User already exists",
+      message: 'User already exists',
     };
   }
 
   const opts: GenerateRegistrationOptionsOpts = {
-    rpName: "SimpleWebAuthn Example",
+    rpName: 'SimpleWebAuthn Example',
     rpID: rpId,
     userID: email,
     userName: email,
     timeout: 60000,
-    attestationType: "none",
+    attestationType: 'none',
     excludeCredentials: [],
     authenticatorSelection: {
-      residentKey: "discouraged",
+      residentKey: 'discouraged',
     },
     /**
      * Support the two most common algorithms: ES256, and RS256
@@ -61,9 +55,7 @@ export const generateWebAuthnRegistrationOptions = async (email: string) => {
   };
 };
 
-export const verifyWebAuthnRegistration = async (
-  data: RegistrationResponseJSON
-) => {
+export const verifyWebAuthnRegistration = async (data: RegistrationResponseJSON) => {
   const {
     data: { email, currentChallenge },
   } = await getCurrentSession();
@@ -71,7 +63,7 @@ export const verifyWebAuthnRegistration = async (
   if (!email || !currentChallenge) {
     return {
       success: false,
-      message: "Session expired",
+      message: 'Session expired',
     };
   }
 
@@ -91,7 +83,7 @@ export const verifyWebAuthnRegistration = async (
   if (!verified || !registrationInfo) {
     return {
       success: false,
-      message: "Registration failed",
+      message: 'Registration failed',
     };
   }
 
@@ -114,7 +106,7 @@ export const verifyWebAuthnRegistration = async (
   } catch {
     return {
       success: false,
-      message: "User already exists",
+      message: 'User already exists',
     };
   }
 
@@ -129,7 +121,7 @@ export const generateWebAuthnLoginOptions = async (email: string) => {
   if (!user) {
     return {
       success: false,
-      message: "User does not exist",
+      message: 'User does not exist',
     };
   }
 
@@ -137,10 +129,10 @@ export const generateWebAuthnLoginOptions = async (email: string) => {
     timeout: 60000,
     allowCredentials: user.devices.map((dev) => ({
       id: isoBase64URL.toBuffer(dev.credentialID),
-      type: "public-key",
+      type: 'public-key',
       transports: dev.transports,
     })),
-    userVerification: "required",
+    userVerification: 'required',
     rpID: rpId,
   };
   const options = await generateAuthenticationOptions(opts);
@@ -161,7 +153,7 @@ export const verifyWebAuthnLogin = async (data: AuthenticationResponseJSON) => {
   if (!email || !currentChallenge) {
     return {
       success: false,
-      message: "Session expired",
+      message: 'Session expired',
     };
   }
 
@@ -170,18 +162,16 @@ export const verifyWebAuthnLogin = async (data: AuthenticationResponseJSON) => {
   if (!user) {
     return {
       success: false,
-      message: "User does not exist",
+      message: 'User does not exist',
     };
   }
 
-  const dbAuthenticator = user.devices.find(
-    (dev) => dev.credentialID === data.rawId
-  );
+  const dbAuthenticator = user.devices.find((dev) => dev.credentialID === data.rawId);
 
   if (!dbAuthenticator) {
     return {
       success: false,
-      message: "Authenticator is not registered with this site",
+      message: 'Authenticator is not registered with this site',
     };
   }
 
@@ -193,9 +183,7 @@ export const verifyWebAuthnLogin = async (data: AuthenticationResponseJSON) => {
     authenticator: {
       ...dbAuthenticator,
       credentialID: isoBase64URL.toBuffer(dbAuthenticator.credentialID),
-      credentialPublicKey: isoBase64URL.toBuffer(
-        dbAuthenticator.credentialPublicKey
-      ),
+      credentialPublicKey: isoBase64URL.toBuffer(dbAuthenticator.credentialPublicKey),
     },
     requireUserVerification: true,
   };
